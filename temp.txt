@@ -1,0 +1,45 @@
+users_pu5
+    userid
+23       1
+176      2
+257      3
+424      4
+455      5
+
+items_pu5
+	itemid	product_name	genres
+0	1	    Toy Story (1995)	Adventure|Animation|Children|Comedy|Fantasy
+1	2	    Jumanji (1995)	Adventure|Children|Fantasy
+2	3	    Grumpier Old Men (1995)	Comedy|Romance
+3	4	    Waiting to Exhale (1995)	Comedy|Drama|Romance
+4	5	    Father of the Bride Part II (1995)	Comedy
+
+purchases_txt_pu5
+	userid	itemids
+23	1	    1079,2959,3996,151,1374,2291,4306,1214,1278,12...
+176	2	    62,1210,1356,1974,2951,110,589,1259,2948,3513,...
+257	3	    589,1721,2118,2710,2722,2448,2505,2694,858,122...
+424	4	    10,356,454,480,589,377,586,350,368,370,594,520...
+
+items_sorted_pu5
+        itemid	nr_of_purchases
+6620	318     55705
+6186	296     52265
+12160	593     50061
+7545	356     47302
+4894	260     42578
+
+users_sorted_pu5
+
+        userid	nr_of_purchases
+28626	125794	3177
+118782	82418	2655
+120595	8405	2503
+20206	118205	2377
+35395	131894	2349
+...	...	...
+4572	104116	5
+28224	125431	5
+11086	109989	5
+67106	3584	5
+36502	132891	5
