@@ -504,8 +504,8 @@ class Evaluator:
         if debug:
             print("Stage 4 done.")
 
-    def update(self, m, chunk=1000):
-        assert len(self.iv) % chunk == 0
+    def update(self, m, chunk=100):
+        #assert len(self.iv) % chunk == 0
         self.pr = np.vstack([m.predict(self.iv[chunk * x:chunk * (x + 1)]) for x in range(len(self.iv) // chunk)])
         self.ppp = (1 - self.iv) * self.pr
         self.ppp[:, 0] = 0
