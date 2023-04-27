@@ -13,8 +13,16 @@ set_seed(42)
 
 print(tf.config.list_physical_devices())
 
-ds_name = 'ml-20m'
-# ds_name = 'netflix'
+# ds_name = 'ml-20m'
+# # netflix: len(self.pr) = 13668
+# # divisors: {1,2,3,4,6,12,17,34,51,67,68,102,134,201,204,268,402,804,1139,2278,3417,4556,6834,13668}
+# chunk = 68
+
+ds_name = 'netflix'
+# netflix: len(self.pr) = 46344
+# divisors: {1,2,3,4,6,8,12,24,1931,3862,5793,7724,11586,15448,23172,46344}
+chunk = 24
+
 # ds_name = 'steam-200k'
 
 data_path = os.path.join('/home/ubuntu/vasp/Datasets/', ds_name, 'preprocessed_vasp/')
@@ -195,16 +203,19 @@ class VASP(Model):
         )
 
     def train_model(self, epochs=150):
+        log_dir = "tb_logs/" + model_name
+        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
         self.model.fit(
             self.split.train_gen,
             validation_data=self.split.validation_gen,
             epochs=epochs,
-            callbacks=[self.mc]
+            callbacks=[self.mc, tensorboard_callback]
         )
 
 dataset = Data(d=data_path, pruning='u5')
 dataset.splits = []
-dataset.create_splits(1, 10000, shuffle=False, n_fold=False, generators=False)
+dataset.create_splits(1, 10000, shuffle=False, n_fold=False, generators=False, batch_size=1024, chunk=chunk)
 dataset.split.train_users = pd.read_json(os.path.join(data_path, "train_users.json")).userid.apply(str).to_frame()
 dataset.split.validation_users = pd.read_json(os.path.join(data_path, "val_users.json")).userid.apply(str).to_frame()
 dataset.split.test_users = pd.read_json(os.path.join(data_path, "test_users.json")).userid.apply(str).to_frame()
@@ -229,7 +240,7 @@ gc.collect()
 
 print("=" * 80)
 print("Than train for 20 epochs with lr 0.000001")
-m.compile_model(lr=0.00001, fl_alpha=0.25, fl_gamma=2.0)
+m.compile_model(lr=0.000001, fl_alpha=0.25, fl_gamma=2.0)
 m.train_model(20)
 
 print(m.mc.get_history_df())

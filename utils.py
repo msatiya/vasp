@@ -123,11 +123,12 @@ class Data:
         _, self.num_words = self.toki.texts_to_matrix(['xx']).shape
         print("Tokenizer trained for", self.num_words, "items.")
 
-    def create_splits(self, n, k_test, shuffle=True, n_fold=True, generators=True, batch_size=1024):
+    def create_splits(self, n, k_test, shuffle=True, n_fold=True, generators=True, batch_size=1024, chunk=1):
         """
         Create n splits of k test items
         shuffle = shuffle users on begin
         n_fold = create n disjunct folds of data
+        chunk = chunk_size used in evaluation, must be a divisor of len(model.predict())
         """
         if not len(self.splits) == 0:
             print("Splits are not empty! Doing nothing...")
@@ -141,7 +142,7 @@ class Data:
         for i in range(n):
             print("Creating split nr.", i + 1)
             self.splits.append(
-                Split(self, k_test, shuffle=False, index=i * k_test, generator=generators, batch_size=batch_size))
+                Split(self, k_test, shuffle=False, index=i * k_test, generator=generators, batch_size=batch_size, chunk=chunk))
 
         self.split = self.splits[0]
 
@@ -222,7 +223,7 @@ class Split:
     Definition of train/validation/test subsets of the dataset.
     """
 
-    def __init__(self, data, k_test, shuffle=True, index=0, generator=True, batch_size=256):
+    def __init__(self, data, k_test, shuffle=True, index=0, generator=True, batch_size=256, chunk=1):
         """
         Create split of k test items
         shuffle = shuffle users on begin
@@ -238,6 +239,8 @@ class Split:
         self.train_users = self.all_users[~self.all_users.userid.isin(self.test_users.userid)]
         self.validation_users = self.train_users.iloc[index:index + k_test]
         self.train_users = self.train_users[~self.train_users.userid.isin(self.validation_users.userid)]
+        self.chunk = chunk
+
         if generator:
             self.generators(batch_size=batch_size)
 
@@ -297,10 +300,10 @@ class Split:
 
         np.random.seed(get_seed())
         random.seed(get_seed())
-        self.test_evaluator = Evaluator(self, data="test")
+        self.test_evaluator = Evaluator(self, data="test", chunk=self.chunk)
         np.random.seed(get_seed())
         random.seed(get_seed())
-        self.evaluator = Evaluator(self, data="val")
+        self.evaluator = Evaluator(self, data="val", chunk=self.chunk)
 
     def train_purchases_txt(self):
         return self.master_data.purchases_txt[self.master_data.purchases_txt.userid.isin(self.train_users.userid)].copy(
@@ -448,9 +451,11 @@ class Evaluator:
     Evaluation on give data split.
     """
 
-    def __init__(self, split, method='leave_random_20_pct_out', data="test", debug=False):
+    def __init__(self, split, method='leave_random_20_pct_out', data="test", debug=False, chunk=1):
         assert method in ['leave_random_20_pct_out', '1_20', '2_20', '3_20', '4_20', '5_20']
         self.split = split
+        self.chunk = chunk
+
         if data == "val":
             print("Creating validation split evaluator with", method, "method.")
             self.ivx = split.validation_gen.data.set_index(split.validation_gen.data.userid).sort_index().itemids.apply(
@@ -504,15 +509,17 @@ class Evaluator:
         if debug:
             print("Stage 4 done.")
 
-    def update(self, m, chunk=4):
-        #assert len(self.iv) % chunk == 0
-        self.pr = np.vstack([m.predict(self.iv[chunk * x:chunk * (x + 1)]) for x in range(len(self.iv) // chunk)])
+    def update(self, m):
+        #assert len(self.iv) % self.chunk == 0
+        self.pr = np.vstack([m.predict(self.iv[self.chunk * x:self.chunk * (x + 1)]) for x in range(len(self.iv) // self.chunk)])
         print('iv: '+str(len(self.iv)))
         print('pr: '+str(len(self.pr)))
         print('ivx: '+str(len(self.ivx)))
-        print('range: '+str(range(len(self.iv) // chunk)))
+        print('range: '+str(range(len(self.iv) // self.chunk)))
+        print('self.chunk: '+str(self.chunk))
         self.ppp = (1 - self.iv) * self.pr
         self.ppp[:, 0] = 0
+        self.chunk
 
     def get_ncdg(self, k):
         pr = self.pr
@@ -715,6 +722,7 @@ class MetricsCallback(tf.keras.callbacks.Callback):
     def recall20_watch(self):
         if self.eval_metrics[self.epoch]['Recall@20'] > self.best_recall20:
             print("New best for Recall@20")
+            self.model.save(self.rsmodel.name + "_best_recall_20_model/" + self.rsmodel.name)
             self.model.save_weights(self.rsmodel.name + "_best_recall_20/" + self.rsmodel.name)
             self.best_recall20 = self.eval_metrics[self.epoch]['Recall@20']
             self.best_recall20_epoch = self.epoch
@@ -724,6 +732,7 @@ class MetricsCallback(tf.keras.callbacks.Callback):
     def recall50_watch(self):
         if self.eval_metrics[self.epoch]['Recall@50'] > self.best_recall50:
             print("New best for Recall@50")
+            self.model.save(self.rsmodel.name + "_best_recall_50_model/" + self.rsmodel.name)
             self.model.save_weights(self.rsmodel.name + "_best_recall_50/" + self.rsmodel.name)
             self.best_recall50 = self.eval_metrics[self.epoch]['Recall@50']
             self.best_recall50_epoch = self.epoch
@@ -733,6 +742,7 @@ class MetricsCallback(tf.keras.callbacks.Callback):
     def ncdg_100_watch(self):
         if self.eval_metrics[self.epoch]['NCDG@100'] > self.best_ncdg100:
             print("New best for NCDG@100")
+            self.model.save(self.rsmodel.name + "_best_ncdg_100_model/" + self.rsmodel.name)
             self.model.save_weights(self.rsmodel.name + "_best_ncdg_100/" + self.rsmodel.name)
             self.best_ncdg100 = self.eval_metrics[self.epoch]['NCDG@100']
             self.best_ncdg100_epoch = self.epoch
