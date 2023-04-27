@@ -222,7 +222,7 @@ class Split:
     Definition of train/validation/test subsets of the dataset.
     """
 
-    def __init__(self, data, k_test, shuffle=True, index=0, generator=True, batch_size=1024):
+    def __init__(self, data, k_test, shuffle=True, index=0, generator=True, batch_size=256):
         """
         Create split of k test items
         shuffle = shuffle users on begin
@@ -504,9 +504,13 @@ class Evaluator:
         if debug:
             print("Stage 4 done.")
 
-    def update(self, m, chunk=100):
+    def update(self, m, chunk=4):
         #assert len(self.iv) % chunk == 0
         self.pr = np.vstack([m.predict(self.iv[chunk * x:chunk * (x + 1)]) for x in range(len(self.iv) // chunk)])
+        print('iv: '+str(len(self.iv)))
+        print('pr: '+str(len(self.pr)))
+        print('ivx: '+str(len(self.ivx)))
+        print('range: '+str(range(len(self.iv) // chunk)))
         self.ppp = (1 - self.iv) * self.pr
         self.ppp[:, 0] = 0
 
