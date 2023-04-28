@@ -248,8 +248,8 @@ class Split:
                    batch_size=1024,
                    random_batching=True,
                    prevent_identity=True,
-                   full_data=False,
-                   p50_splits=True,
+                   full_data=True,
+                   p50_splits=False,
                    p2575_splits=False,
                    p7525_splits=False,
                    p2525_splits=False,
@@ -389,22 +389,28 @@ class SplitGenerator(tf.keras.utils.Sequence):
 
         data_slice = self.data_np[self.batch_size * index:self.batch_size * index + self.batch_size]
 
-        indices = list(range(self.__len__()))
-        indices += indices
-
-        index2 = indices[index + 1]
-        index3 = indices[index + 2]
-        index4 = indices[index + 3]
-        index5 = indices[index + 4]
-
         if self.full_data:
             data_slice = self.data_np[self.batch_size * index:self.batch_size * index + self.batch_size]
 
         if self.p50_splits:
+            indices = list(range(self.__len__()))
+            indices += indices
+
+            index2 = indices[index + 1]
+            index3 = indices[index + 2]
+
             data_slice2 = self.data_np[self.batch_size * index2:self.batch_size * index2 + self.batch_size]
             data_slice3 = self.data_np[self.batch_size * index3:self.batch_size * index3 + self.batch_size]
 
         if self.p2575_splits or self.p7525_splits or self.p2525_splits or self.p7575_splits:
+            indices = list(range(self.__len__()))
+            indices += indices
+
+            index2 = indices[index + 1]
+            index3 = indices[index + 2]
+            index4 = indices[index + 3]
+            index5 = indices[index + 4]
+
             data_slice4 = self.data_np[self.batch_size * index4:self.batch_size * index4 + self.batch_size]
             data_slice5 = self.data_np[self.batch_size * index5:self.batch_size * index5 + self.batch_size]
 
@@ -506,6 +512,10 @@ class Evaluator:
             [",".join(x) for x in self.tpx]
         )
         self.tpx_set = [set(t) for t in self.tpx]
+        print('tpx_set: '+str(len(self.tpx_set)))
+        self.ivx_set = [set(t) for t in self.ivx]
+        print('ivx_set: '+str(len(self.ivx_set)))
+        print('iv: '+str(len(self.iv)))
         if debug:
             print("Stage 4 done.")
 
@@ -520,6 +530,39 @@ class Evaluator:
         self.ppp = (1 - self.iv) * self.pr
         self.ppp[:, 0] = 0
         self.chunk
+
+
+    def custom_ndcg_at_rank_k(self, k):
+        # ppp = self.ppp
+        # idx = bn.argpartition(-ppp, k, axis=1)
+        # topk_part = ppp[np.arange(ppp.shape[0])[:, np.newaxis], idx[:, :k]]
+        # idx_part = np.argsort(-topk_part, axis=1)
+        # idx_topk = idx[np.arange(self.iv.shape[0])[:, np.newaxis], idx_part]
+        # tp = 1. / np.log2(np.arange(2, k + 2))
+
+        # z = zip([[self.split.master_data.toki.index_word[b] for b in a] for a in idx_topk], self.tpx_set)
+
+        # n = np.array([(np.array([1 if x in true else 0 for x in pred]) * tp).sum() for pred, true in z])
+        # d = np.array([(np.ones(min(k, len(x))) * tp[:len(x)]).sum() for x in self.tpx_set])
+
+        def custom_calculate_dcg(prediction_ids, target_ids):
+            prediction_ids = list(dict.fromkeys(prediction_ids))
+            target_ids = set(target_ids)
+            dcg = 0
+            for i, pred_id in enumerate(prediction_ids, 1):
+                if pred_id in target_ids:
+                    relevance = 1 / np.log2(i + 1)
+                    dcg += relevance
+            return dcg
+    
+        prediction_ids = self.ppp
+        target_ids = self.ivx_set
+
+        dcg = custom_calculate_dcg(prediction_ids[:k], target_ids)
+        idcg = custom_calculate_dcg(target_ids[:k], target_ids)
+        ndcg = dcg / idcg if idcg > 0 else 0
+
+        return ndcg
 
     def get_ncdg(self, k):
         pr = self.pr
@@ -630,6 +673,7 @@ class Model:
             'Recall@20': {'k': 20, 'method': self.split.evaluator.get_recall, 'value': None},
             'Recall@50': {'k': 50, 'method': self.split.evaluator.get_recall, 'value': None},
             'NCDG@100': {'k': 100, 'method': self.split.evaluator.get_ncdg, 'value': None},
+            'custom_NCDG@100': {'k': 100, 'method': self.split.evaluator.custom_ndcg_at_rank_k, 'value': None},
             'Coverage@5': {'k': 5, 'method': self.split.evaluator.get_coverage, 'value': None},
             'Coverage@20': {'k': 20, 'method': self.split.evaluator.get_coverage, 'value': None},
             'Coverage@50': {'k': 50, 'method': self.split.evaluator.get_coverage, 'value': None},
@@ -663,20 +707,19 @@ class Model:
         e = self.split.test_evaluator
         e.update(self.model)
         print("Results for test set: Recall@20=", e.get_recall(20), ", Recall@50=", e.get_recall(50), ", NCDG@100=",
-              e.get_ncdg(100), sep="")
+              e.get_ncdg(100) + ", custom_NCDG@100=" + e.custom_ndcg_at_rank_k(100), sep="")
         with open("seed_results_test.txt", "a") as myfile:
             myfile.write("Results for test set: Recall@20=" + str(e.get_recall(20)) + ", Recall@50=" + str(
-                e.get_recall(50)) + ", NCDG@100=" + str(e.get_ncdg(100)) + "\n")
+                e.get_recall(50)) + ", NCDG@100=" + str(e.get_ncdg(100)) + ", custom_NCDG@100=" + str(e.custom_ndcg_at_rank_k(100)) + "\n")
 
     def test_model_val(self):
         e = self.split.evaluator
         e.update(self.model)
         print("Results for validation set: Recall@20=", e.get_recall(20), ", Recall@50=", e.get_recall(50),
-              ", NCDG@100=",
-              e.get_ncdg(100), sep="")
+              ", NCDG@100=", e.get_ncdg(100), ", custom_NCDG@100=", e.custom_ndcg_at_rank_k(100), sep="")
         with open("seed_results_val.txt", "a") as myfile:
             myfile.write("Results for validation set: Recall@20=" + str(e.get_recall(20)) + ", Recall@50=" + str(
-                e.get_recall(50)) + ", NCDG@100=" + str(e.get_ncdg(100)) + "\n")
+                e.get_recall(50)) + ", NCDG@100=" + str(e.get_ncdg(100)) + ", custom_NCDG@100=" + str(e.custom_ndcg_at_rank_k(100)) + "\n")
 
 
 # Tensorflow objects - Callbacks
@@ -722,7 +765,7 @@ class MetricsCallback(tf.keras.callbacks.Callback):
     def recall20_watch(self):
         if self.eval_metrics[self.epoch]['Recall@20'] > self.best_recall20:
             print("New best for Recall@20")
-            self.model.save(self.rsmodel.name + "_best_recall_20_model/" + self.rsmodel.name)
+            self.model.save(self.rsmodel.name + "_best_recall_20_model/" + self.rsmodel.name, save_format="tf")
             self.model.save_weights(self.rsmodel.name + "_best_recall_20/" + self.rsmodel.name)
             self.best_recall20 = self.eval_metrics[self.epoch]['Recall@20']
             self.best_recall20_epoch = self.epoch
@@ -732,7 +775,7 @@ class MetricsCallback(tf.keras.callbacks.Callback):
     def recall50_watch(self):
         if self.eval_metrics[self.epoch]['Recall@50'] > self.best_recall50:
             print("New best for Recall@50")
-            self.model.save(self.rsmodel.name + "_best_recall_50_model/" + self.rsmodel.name)
+            self.model.save(self.rsmodel.name + "_best_recall_50_model/" + self.rsmodel.name, save_format="tf")
             self.model.save_weights(self.rsmodel.name + "_best_recall_50/" + self.rsmodel.name)
             self.best_recall50 = self.eval_metrics[self.epoch]['Recall@50']
             self.best_recall50_epoch = self.epoch
@@ -742,7 +785,7 @@ class MetricsCallback(tf.keras.callbacks.Callback):
     def ncdg_100_watch(self):
         if self.eval_metrics[self.epoch]['NCDG@100'] > self.best_ncdg100:
             print("New best for NCDG@100")
-            self.model.save(self.rsmodel.name + "_best_ncdg_100_model/" + self.rsmodel.name)
+            self.model.save(self.rsmodel.name + "_best_ncdg_100_model/" + self.rsmodel.name, save_format="tf")
             self.model.save_weights(self.rsmodel.name + "_best_ncdg_100/" + self.rsmodel.name)
             self.best_ncdg100 = self.eval_metrics[self.epoch]['NCDG@100']
             self.best_ncdg100_epoch = self.epoch

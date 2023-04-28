@@ -14,16 +14,28 @@ set_seed(42)
 print(tf.config.list_physical_devices())
 
 # ds_name = 'ml-20m'
-# # netflix: len(self.pr) = 13668
+# # ml-20m: len(self.pr_val) = 13668
 # # divisors: {1,2,3,4,6,12,17,34,51,67,68,102,134,201,204,268,402,804,1139,2278,3417,4556,6834,13668}
-# chunk = 68
+# chunk_val = 804
+# # ml-20m: len(self.pr_test) = 13667
+# # divisors: {1,79,173,13667}
+# chunk_test = 173
 
 ds_name = 'netflix'
-# netflix: len(self.pr) = 46344
+# netflix: len(self.pr_val) = 46344
 # divisors: {1,2,3,4,6,8,12,24,1931,3862,5793,7724,11586,15448,23172,46344}
-chunk = 24
+chunk_val= 1931
+# netflix: len(self.pr_test) = 46343
+# divisors: {1,11,121,383,4213,46343}
+chunk_test= 383
 
 # ds_name = 'steam-200k'
+# # steam: len(self.pr) = 165
+# # divisors: {1,3,5,11,15,33,55,165}
+# chunk_val = 165
+# # steam: len(self.pr) = 163
+# # divisors: {1,163}
+# chunktest = 163
 
 data_path = os.path.join('/home/ubuntu/vasp/Datasets/', ds_name, 'preprocessed_vasp/')
 
@@ -215,7 +227,7 @@ class VASP(Model):
 
 dataset = Data(d=data_path, pruning='u5')
 dataset.splits = []
-dataset.create_splits(1, 10000, shuffle=False, n_fold=False, generators=False, batch_size=1024, chunk=chunk)
+dataset.create_splits(1, 10000, shuffle=False, n_fold=False, generators=False, batch_size=1024, chunk=chunk_val)
 dataset.split.train_users = pd.read_json(os.path.join(data_path, "train_users.json")).userid.apply(str).to_frame()
 dataset.split.validation_users = pd.read_json(os.path.join(data_path, "val_users.json")).userid.apply(str).to_frame()
 dataset.split.test_users = pd.read_json(os.path.join(data_path, "test_users.json")).userid.apply(str).to_frame()
@@ -251,7 +263,7 @@ test_r50s = []
 test_n100s = []
 
 for fold in range(1,6):
-    ev=Evaluator(m.split, method=str(fold)+'_20')
+    ev=Evaluator(m.split, method=str(fold)+'_20', chunk=chunk_test)
     ev.update(m.model)
 
     test_n100s.append(ev.get_ncdg(100))
