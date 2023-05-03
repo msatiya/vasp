@@ -43,3 +43,51 @@ users_sorted_pu5
 11086	109989	5
 67106	3584	5
 36502	132891	5
+
+
+def custom_hits_at_rank_k(self, k):
+    prediction_ids, target_ids = self.pr_ids, self.tg_ids
+    prediction_ids = set(prediction_ids[:k])
+    target_ids = set(target_ids)
+    hits = len(prediction_ids.intersection(target_ids))
+    return hits
+
+def custom_recall_at_rank_k(self, k):
+    prediction_ids, target_ids = self.pr_ids, self.tg_ids
+    hits = custom_hits_at_rank_k(prediction_ids, target_ids, k)
+    recall = hits / len(target_ids) if len(target_ids) > 0 else 0
+    return recall
+
+def custom_adjusted_recall_at_rank_k(self, k):
+    prediction_ids, target_ids = self.pr_ids, self.tg_ids
+    hits = custom_hits_at_rank_k(prediction_ids, target_ids, k)
+    recall = hits / len(target_ids[:k]) if len(target_ids[:k]) > 0 else 0
+    return recall
+
+def custom_precision_at_rank_k(self, k):
+    prediction_ids, target_ids = self.pr_ids, self.tg_ids
+    hits = custom_hits_at_rank_k(prediction_ids, target_ids, k)
+    precision = hits / len(prediction_ids[:k]) if len(target_ids[:k]) > 0 else 0
+    return precision
+
+def custom_calculate_dcg(prediction_ids, target_ids):
+    prediction_ids = list(dict.fromkeys(prediction_ids))
+    target_ids = set(target_ids)
+    dcg = 0
+    for i, pred_id in enumerate(prediction_ids, 1):
+        if pred_id in target_ids:
+            relevance = 1 / np.log2(i + 1)
+            dcg += relevance
+    return dcg
+
+def custom_ndcg_at_rank_k(self, k):
+    prediction_ids, target_ids = self.pr_ids, self.tg_ids
+    dcg = calculate_dcg(prediction_ids[:k], target_ids)
+    idcg = calculate_dcg(target_ids[:k], target_ids)
+    ndcg = dcg / idcg if idcg > 0 else 0
+    return ndcg
+
+custom_hits_at_rank_k
+custom_recall_at_rank_k
+custom_adjusted_recall_at_rank_k
+custom_precision_at_rank_k
