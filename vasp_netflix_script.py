@@ -13,21 +13,21 @@ set_seed(42)
 
 print(tf.config.list_physical_devices())
 
-ds_name = 'ml-20m'
-# ml-20m: len(self.pr_val) = 13668
-# divisors: {1,2,3,4,6,12,17,34,51,67,68,102,134,201,204,268,402,804,1139,2278,3417,4556,6834,13668}
-chunk_val = 1139
-# ml-20m: len(self.pr_test) = 13667
-# divisors: {1,79,173,13667}
-chunk_test = 173
+# ds_name = 'ml-20m'
+# # ml-20m: len(self.pr_val) = 13668
+# # divisors: {1,2,3,4,6,12,17,34,51,67,68,102,134,201,204,268,402,804,1139,2278,3417,4556,6834,13668}
+# chunk_val = 1139
+# # ml-20m: len(self.pr_test) = 13667
+# # divisors: {1,79,173,13667}
+# chunk_test = 173
 
-# ds_name = 'netflix'
-# # netflix: len(self.pr_val) = 46344
-# # divisors: {1,2,3,4,6,8,12,24,1931,3862,5793,7724,11586,15448,23172,46344}
-# chunk_val= 1931
-# # netflix: len(self.pr_test) = 46343
-# # divisors: {1,11,121,383,4213,46343}
-# chunk_test= 383
+ds_name = 'netflix'
+# netflix: len(self.pr_val) = 46344
+# divisors: {1,2,3,4,6,8,12,24,1931,3862,5793,7724,11586,15448,23172,46344}
+chunk_val= 1931
+# netflix: len(self.pr_test) = 46343
+# divisors: {1,11,121,383,4213,46343}
+chunk_test = 383
 
 # ds_name = 'steam-200k'
 # # steam: len(self.pr) = 165
@@ -241,19 +241,19 @@ m.create_model(latent=2048, hidden=4096, ease_items_sampling=0.33)
 print("=" * 80)
 print("Train for 50 epochs with lr 0.00005")
 m.compile_model(lr=0.00005, fl_alpha=0.25, fl_gamma=2.0)
-m.train_model(5)
+m.train_model(50)
 gc.collect()
 
-# print("=" * 80)
-# print("Than train for 20 epochs with lr 0.00001")
-# m.compile_model(lr=0.00001, fl_alpha=0.25, fl_gamma=2.0)
-# m.train_model(20)
-# gc.collect()
+print("=" * 80)
+print("Than train for 20 epochs with lr 0.00001")
+m.compile_model(lr=0.00001, fl_alpha=0.25, fl_gamma=2.0)
+m.train_model(20)
+gc.collect()
 
-# print("=" * 80)
-# print("Than train for 20 epochs with lr 0.000001")
-# m.compile_model(lr=0.000001, fl_alpha=0.25, fl_gamma=2.0)
-# m.train_model(20)
+print("=" * 80)
+print("Than train for 20 epochs with lr 0.000001")
+m.compile_model(lr=0.000001, fl_alpha=0.25, fl_gamma=2.0)
+m.train_model(20)
 
 print(m.mc.get_history_df())
 

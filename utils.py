@@ -23,23 +23,41 @@ os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 
 # Auxiliary functions
 def ndcg_at_rank_k(prediction_ids, target_ids, k):
-    dcg = aux_custom_calculate_dcg(prediction_ids[:k], target_ids)
-    idcg = aux_custom_calculate_dcg(target_ids[:k], target_ids)
+    dcg = aux_custom_calculate_dcg(list(prediction_ids)[:k], target_ids)
+    idcg = aux_custom_calculate_dcg(list(target_ids)[:k], target_ids)
+
     ndcg = dcg / idcg if idcg > 0 else 0
     return ndcg
 
 def aux_custom_calculate_dcg(prediction_ids, target_ids):
-    prediction_ids = list(prediction_ids)
-    target_ids = set(target_ids)
+    # prediction_ids = list(dict.fromkeys(prediction_ids))
+    # target_ids = set(target_ids)
+
     dcg = 0
+    # print('pred_ids: ')
+    # print(prediction_ids)
+
     for i, pred_id in enumerate(prediction_ids, 1):
+
+        # print('target_set:')
+        # print(target_ids)
+
         if pred_id in target_ids:
+            # print('pi: ')
+            # print(pred_id)
+            
             relevance = 1 / np.log2(i + 1)
             dcg += relevance
+    
+    # if dcg != 0:
+    #     print('catch!!!!!!!!!')
+    #     print(dcg)
+
+
     return dcg
 
 def aux_custom_hits_at_rank_k(prediction_ids, target_ids, k):
-    prediction_ids = set(prediction_ids[:k])
+    prediction_ids = set(list(prediction_ids)[:k])
     target_ids = set(target_ids)
     hits = len(prediction_ids.intersection(target_ids))
     return hits
@@ -534,13 +552,13 @@ class Evaluator:
             [",".join(x) for x in self.tpx]
         )
         self.tpx_set = [set(t) for t in self.tpx]
-        print('tpx_set: '+str(len(self.tpx_set)))
-        print('tpx_set: '+str(len(self.tpx_set[100])))
-        print('type tpx_set: '+str(type(self.tpx_set)))
+        # print('tpx_set: '+str(len(self.tpx_set)))
+        # print('tpx_set: '+str(len(self.tpx_set[100])))
+        # print('type tpx_set: '+str(type(self.tpx_set)))
 
-        print('iv: '+str(len(self.iv)))
-        print('iv: '+str(len(self.iv[100])))
-        print('type iv: '+str(type(self.tpx_set)))
+        # print('iv: '+str(len(self.iv)))
+        # print('iv: '+str(len(self.iv[100])))
+        # print('type iv: '+str(type(self.tpx_set)))
         if debug:
             print("Stage 4 done.")
 
@@ -548,87 +566,143 @@ class Evaluator:
         #assert len(self.iv) % self.chunk == 0
 
         self.pr = np.vstack([m.predict(self.iv[self.chunk * x:self.chunk * (x + 1)]) for x in range(len(self.iv) // self.chunk)])
-        print('iv: '+str(len(self.iv)))
-        print('pr: '+str(len(self.pr)))
-        print('ivx: '+str(len(self.ivx)))
-        print('range: '+str(range(len(self.iv) // self.chunk)))
-        print('self.chunk: '+str(self.chunk))
+        # print('iv: '+str(len(self.iv)))
+        # print('pr: '+str(len(self.pr)))
+        # print('ivx: '+str(len(self.ivx)))
+        # print('range: '+str(range(len(self.iv) // self.chunk)))
+        # print('self.chunk: '+str(self.chunk))
         self.ppp = (1 - self.iv) * self.pr
         self.ppp[:, 0] = 0
 
     def custom_hits_at_rank_k(self, k):
-        prediction_ids, target_ids = self.pr, self.iv
+        ppp = self.ppp
+        idx = bn.argpartition(-ppp, k, axis=1)
 
-        prediction_ids = set(prediction_ids[:k])
-        target_ids = set(target_ids)
-        hits = len(prediction_ids.intersection(target_ids))
-        return hits
-
-    def custom_recall_at_rank_k(self, k):
-        prediction_ids, target_ids = self.pr, self.iv
-
-        hits = aux_custom_hits_at_rank_k(prediction_ids, target_ids, k)
-        recall = hits / len(target_ids) if len(target_ids) > 0 else 0
-        return recall
-
-    def custom_adjusted_recall_at_rank_k(self, k):
-        prediction_ids, target_ids = self.pr, self.iv
-
-        hits = aux_custom_hits_at_rank_k(prediction_ids, target_ids, k)
-        recall = hits / len(target_ids[:k]) if len(target_ids[:k]) > 0 else 0
-        return recall
-
-    def custom_precision_at_rank_k(self, k):
-        prediction_ids, target_ids = self.pr, self.iv
-
-        hits = aux_custom_hits_at_rank_k(prediction_ids, target_ids, k)
-        precision = hits / len(prediction_ids[:k]) if len(target_ids[:k]) > 0 else 0
-        return precision
-
-    def custom_ndcg_at_rank_k(self, k):
-        prediction_ids, target_ids = self.pr, self.iv
+        prediction_ids, target_ids = [set([self.split.master_data.toki.index_word[s] for s in a[:k]]) for a in idx], self.tpx_set
 
         length = len(prediction_ids)
 
         if len(prediction_ids) > len(target_ids):
-            print('length_mismatch between predicted user_ids and target user_ids: len(prediction_ids) > len(target_ids)')
+            print('length_mismatch at custom_recall_at_rank_k between predicted user_ids and target user_ids: len(prediction_ids) > len(target_ids)')
             length = target_ids
         elif len(prediction_ids) < len(target_ids):
-            print('length_mismatch between predicted user_ids and target user_ids: len(prediction_ids) < len(target_ids)')
+            print('length_mismatch at custom_recall_at_rank_k between predicted user_ids and target user_ids: len(prediction_ids) < len(target_ids)')
 
-        ndcg_array = np.zeros(length)
+        metrics_array = []
         
-        preds = prediction_ids
-        print('preds: '+str(len(preds)))
-        print('type preds: '+str(type(preds)))
-        mode_te = target_ids
-        print('mode_te: '+str(len(mode_te)))
-        print('type mode_te: '+str(type(mode_te)))
+        for uid in range(length):
+            true_items = target_ids[uid]
+            pred_items = prediction_ids[uid]
+
+            pred_items = set(list(pred_items)[:k])
+            true_items = set(true_items)
+            hits = len(pred_items.intersection(true_items))
+            metrics_array.append(hits)
+
+        return np.mean(metrics_array)
+
+    def custom_recall_at_rank_k(self, k):
+        ppp = self.ppp
+        idx = bn.argpartition(-ppp, k, axis=1)
+        
+        prediction_ids, target_ids = [set([self.split.master_data.toki.index_word[s] for s in a[:k]]) for a in idx], self.tpx_set
+
+        length = len(prediction_ids)
+
+        if len(prediction_ids) > len(target_ids):
+            print('length_mismatch at custom_recall_at_rank_k between predicted user_ids and target user_ids: len(prediction_ids) > len(target_ids)')
+            length = target_ids
+        elif len(prediction_ids) < len(target_ids):
+            print('length_mismatch at custom_recall_at_rank_k between predicted user_ids and target user_ids: len(prediction_ids) < len(target_ids)')
+
+        metrics_array = []
+        
+        for uid in range(length):
+            true_items = target_ids[uid]
+            pred_items = prediction_ids[uid]
+
+            hits = aux_custom_hits_at_rank_k(pred_items, true_items, k)
+            recall = hits / len(true_items) if len(true_items) > 0 else 0
+            metrics_array.append(recall)
+
+        return np.mean(metrics_array)
+
+    def custom_adjusted_recall_at_rank_k(self, k):
+        ppp = self.ppp
+        idx = bn.argpartition(-ppp, k, axis=1)
+        
+        prediction_ids, target_ids = [set([self.split.master_data.toki.index_word[s] for s in a[:k]]) for a in idx], self.tpx_set
+
+        length = len(prediction_ids)
+
+        if len(prediction_ids) > len(target_ids):
+            print('length_mismatch at custom_adjusted_recall_at_rank_k between predicted user_ids and target user_ids: len(prediction_ids) > len(target_ids)')
+            length = target_ids
+        elif len(prediction_ids) < len(target_ids):
+            print('length_mismatch at custom_adjusted_recall_at_rank_k between predicted user_ids and target user_ids: len(prediction_ids) < len(target_ids)')
+
+        metrics_array = []
+        
+        for uid in range(length):
+            true_items = target_ids[uid]
+            pred_items = prediction_ids[uid]
+
+            hits = aux_custom_hits_at_rank_k(pred_items, true_items, k)
+            recall = hits / len(true_items[:k]) if len(true_items[:k]) > 0 else 0
+            metrics_array.append(recall)
+
+        return np.mean(metrics_array)
+
+    def custom_ndcg_at_rank_k(self, k):
+
+        ppp = self.ppp
+        idx = bn.argpartition(-ppp, k, axis=1)
+        topk_part = ppp[np.arange(ppp.shape[0])[:, np.newaxis], idx[:, :k]]
+        idx_part = np.argsort(-topk_part, axis=1)
+        idx_topk = idx[np.arange(self.iv.shape[0])[:, np.newaxis], idx_part]
+
+        prediction_ids = [[self.split.master_data.toki.index_word[b] for b in a] for a in idx_topk] #[set([self.split.master_data.toki.index_word[s] for s in a[:k]]) for a in idx]
+        target_ids = self.tpx_set
+
+        length = len(prediction_ids)
+
+        if len(prediction_ids) > len(target_ids):
+            print('length_mismatch at custom_ndcg_at_rank_k between predicted user_ids and target user_ids: len(prediction_ids) > len(target_ids)')
+            length = target_ids
+        elif len(prediction_ids) < len(target_ids):
+            print('length_mismatch at custom_ndcg_at_rank_k between predicted user_ids and target user_ids: len(prediction_ids) < len(target_ids)')
+
+        ndcg_array = [] #np.zeros(length)
+        
+        # print('preds: '+str(len(prediction_ids)))
+        # print('preds: '+str(len(prediction_ids[0])))
+        # print('type preds: '+str(type(prediction_ids)))
+
+        # print('mode_te: '+str(len(target_ids)))
+        # print('mode_te: '+str(len(target_ids[0])))
+        # print('type mode_te: '+str(type(target_ids)))
 
 
         for uid in range(length):
 
-            pred_items = preds[uid]#.item()
-            # print('type pred_items: '+str(type(pred_items)))
-            # print('pred_items: '+str(len(pred_items)))
+            true_items = target_ids[uid]
 
-            true_items = mode_te[uid]#.item()
-            # print('type true_items: '+str(type(true_items)))
-            # print('true_items: '+str(len(true_items)))
+            #for pi in prediction_ids[uid]:
+            pred_items = prediction_ids[uid]
 
-            ndcg_array[uid] = ndcg_at_rank_k(pred_items, true_items, k)
+            ndcg_array.append(ndcg_at_rank_k(pred_items, true_items, k))
 
-            # for k, values in metrics['mode']["nDCG"].items():
-            #     metrics['mode']["nDCG"][k] = np.mean(values)
-                    
-        print('ndcg: ' + str(len(ndcg_array)))
-        print('type ndcg: ' + str(type(ndcg_array)))
-        print('ex ndcg: ' + str(np.unique(ndcg_array)))
+        # print('ndcg: ' + str(len(ndcg_array)))
+        # print('unique ndcg: ' + str(np.unique(ndcg_array)))
+        # print(np.mean(ndcg_array))
+        # ndcg_array = 0
 
-        x = 0
-        x.mean()
+        # print(np.mean(ndcg_array))
+        # print(np.sum(ndcg_array)/length)
+        # print(len(ndcg_array))
+        # print(length)
 
-        return ndcg_array.mean()
+        return np.mean(ndcg_array)
 
     def get_ncdg(self, k):
         pr = self.pr
@@ -737,9 +811,9 @@ class Model:
         self.metrics = {
             'Recall@5': {'k': 5, 'method': self.split.evaluator.get_recall, 'value': None},
             'Recall@20': {'k': 20, 'method': self.split.evaluator.get_recall, 'value': None},
-            #'custom_Recall@20': {'k': 20, 'method': self.split.evaluator.custom_recall_at_rank_k, 'value': None},
+            'custom_Recall@20': {'k': 20, 'method': self.split.evaluator.custom_recall_at_rank_k, 'value': None},
             'Recall@50': {'k': 50, 'method': self.split.evaluator.get_recall, 'value': None},
-            #'custom_Recall@50': {'k': 50, 'method': self.split.evaluator.custom_recall_at_rank_k, 'value': None},
+            'custom_Recall@50': {'k': 50, 'method': self.split.evaluator.custom_recall_at_rank_k, 'value': None},
             'NCDG@100': {'k': 100, 'method': self.split.evaluator.get_ncdg, 'value': None},
             'custom_NCDG@100': {'k': 100, 'method': self.split.evaluator.custom_ndcg_at_rank_k, 'value': None},
             'Coverage@5': {'k': 5, 'method': self.split.evaluator.get_coverage, 'value': None},

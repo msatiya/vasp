@@ -4,3 +4,4 @@ ml-20m/
 *.json
 *_best_*
 tb_logs/
+*nohup*
