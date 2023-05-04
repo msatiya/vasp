@@ -227,7 +227,7 @@ class VASP(Model):
 
 dataset = Data(d=data_path, pruning='u5')
 dataset.splits = []
-dataset.create_splits(1, 10000, shuffle=False, n_fold=False, generators=False, batch_size=1024, chunk=chunk_val)
+dataset.create_splits(1, 10000, shuffle=False, n_fold=False, generators=True, batch_size=1024, chunk=chunk_val)
 dataset.split.train_users = pd.read_json(os.path.join(data_path, "train_users.json")).userid.apply(str).to_frame()
 dataset.split.validation_users = pd.read_json(os.path.join(data_path, "val_users.json")).userid.apply(str).to_frame()
 dataset.split.test_users = pd.read_json(os.path.join(data_path, "test_users.json")).userid.apply(str).to_frame()
@@ -237,22 +237,18 @@ m = VASP(dataset.split, name=model_name)
 gc.collect()
 
 m.create_model(latent=2048, hidden=4096, ease_items_sampling=0.33)
-#m.model.summary()
+m.model.summary()
 print("=" * 80)
 print("Train for 50 epochs with lr 0.00005")
 m.compile_model(lr=0.00005, fl_alpha=0.25, fl_gamma=2.0)
 m.train_model(50)
-gc.collect()
-
 print("=" * 80)
 print("Than train for 20 epochs with lr 0.00001")
 m.compile_model(lr=0.00001, fl_alpha=0.25, fl_gamma=2.0)
 m.train_model(20)
-gc.collect()
-
 print("=" * 80)
 print("Than train for 20 epochs with lr 0.000001")
-m.compile_model(lr=0.000001, fl_alpha=0.25, fl_gamma=2.0)
+m.compile_model(lr=0.00001, fl_alpha=0.25, fl_gamma=2.0)
 m.train_model(20)
 
 print(m.mc.get_history_df())
@@ -261,6 +257,8 @@ print(m.mc.get_history_df())
 test_r20s = []
 test_r50s = []
 test_n100s = []
+test_custom_r20s = []
+test_custom_r50s = []
 test_custom_n100s = []
 
 for fold in range(1,6):
@@ -270,10 +268,14 @@ for fold in range(1,6):
     test_n100s.append(ev.get_ncdg(100))
     test_custom_n100s.append(ev.custom_ndcg_at_rank_k(100))
     test_r20s.append(ev.get_recall(20))
+    test_custom_r20s.append(ev.custom_recall_at_rank_k(20))
     test_r50s.append(ev.get_recall(50))
+    test_custom_r50s.append(ev.custom_recall_at_rank_k(50))
 
 print("TEST SET (MEAN)")
 print("5-fold mean NCDG@100", round(sum(test_n100s) / len(test_n100s),3))
 print("5-fold mean customNCDG@100", round(sum(test_custom_n100s) / len(test_custom_n100s),3))
 print("5-fold mean Recall@20", round(sum(test_r20s) / len(test_r20s),3))
+print("5-fold mean customRecall@20", round(sum(test_custom_r20s) / len(test_custom_r20s),3))
 print("5-fold mean Recall@50", round(sum(test_r50s) / len(test_r50s),3))
+print("5-fold mean customRecall@50", round(sum(test_custom_r50s) / len(test_custom_r50s),3))

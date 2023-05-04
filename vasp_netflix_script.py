@@ -227,7 +227,7 @@ class VASP(Model):
 
 dataset = Data(d=data_path, pruning='u5')
 dataset.splits = []
-dataset.create_splits(1, 10000, shuffle=False, n_fold=False, generators=False, batch_size=1024, chunk=chunk_val)
+dataset.create_splits(1, 10000, shuffle=False, n_fold=False, generators=True, batch_size=1024, chunk=chunk_val)
 dataset.split.train_users = pd.read_json(os.path.join(data_path, "train_users.json")).userid.apply(str).to_frame()
 dataset.split.validation_users = pd.read_json(os.path.join(data_path, "val_users.json")).userid.apply(str).to_frame()
 dataset.split.test_users = pd.read_json(os.path.join(data_path, "test_users.json")).userid.apply(str).to_frame()
@@ -237,22 +237,18 @@ m = VASP(dataset.split, name=model_name)
 gc.collect()
 
 m.create_model(latent=2048, hidden=4096, ease_items_sampling=0.33)
-#m.model.summary()
+m.model.summary()
 print("=" * 80)
 print("Train for 50 epochs with lr 0.00005")
 m.compile_model(lr=0.00005, fl_alpha=0.25, fl_gamma=2.0)
 m.train_model(50)
-gc.collect()
-
 print("=" * 80)
 print("Than train for 20 epochs with lr 0.00001")
 m.compile_model(lr=0.00001, fl_alpha=0.25, fl_gamma=2.0)
 m.train_model(20)
-gc.collect()
-
 print("=" * 80)
 print("Than train for 20 epochs with lr 0.000001")
-m.compile_model(lr=0.000001, fl_alpha=0.25, fl_gamma=2.0)
+m.compile_model(lr=0.00001, fl_alpha=0.25, fl_gamma=2.0)
 m.train_model(20)
 
 print(m.mc.get_history_df())
