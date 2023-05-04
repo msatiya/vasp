@@ -1,7 +1,7 @@
 import os
 from datetime import datetime  
 
-from utils import *
+from utils_steam import *
 import tensorflow as tf
 import tensorflow_addons as tfa
 tf.config.experimental.set_memory_growth
@@ -13,13 +13,13 @@ set_seed(42)
 
 print(tf.config.list_physical_devices())
 
-ds_name = 'ml-20m'
-# ml-20m: len(self.pr_val) = 13668
-# divisors: {1,2,3,4,6,12,17,34,51,67,68,102,134,201,204,268,402,804,1139,2278,3417,4556,6834,13668}
-chunk_val = 2278
-# ml-20m: len(self.pr_test) = 13667
-# divisors: {1,79,173,13667}
-chunk_test = 173
+# ds_name = 'ml-20m'
+# # ml-20m: len(self.pr_val) = 13668
+# # divisors: {1,2,3,4,6,12,17,34,51,67,68,102,134,201,204,268,402,804,1139,2278,3417,4556,6834,13668}
+# chunk_val = 1139
+# # ml-20m: len(self.pr_test) = 13667
+# # divisors: {1,79,173,13667}
+# chunk_test = 173
 
 # ds_name = 'netflix'
 # # netflix: len(self.pr_val) = 46344
@@ -29,13 +29,13 @@ chunk_test = 173
 # # divisors: {1,11,121,383,4213,46343}
 # chunk_test= 383
 
-# ds_name = 'steam-200k'
-# # steam: len(self.pr) = 165
-# # divisors: {1,3,5,11,15,33,55,165}
-# chunk_val = 165
-# # steam: len(self.pr) = 163
-# # divisors: {1,163}
-# chunktest = 163
+ds_name = 'steam-200k'
+# steam: len(self.pr) = 165
+# divisors: {1,3,5,11,15,33,55,165}
+chunk_val = 165
+# steam: len(self.pr) = 163
+# divisors: {1,163}
+chunk_test = 163
 
 data_path = os.path.join('/home/ubuntu/vasp/Datasets/', ds_name, 'preprocessed_vasp/')
 
@@ -274,9 +274,9 @@ for fold in range(1,6):
     test_custom_r50s.append(ev.custom_recall_at_rank_k(50))
 
 print("TEST SET (MEAN)")
-print("5-fold mean NCDG@100", round(sum(test_n100s) / len(test_n100s),3))
-print("5-fold mean customNCDG@100", round(sum(test_custom_n100s) / len(test_custom_n100s),3))
-print("5-fold mean Recall@20", round(sum(test_r20s) / len(test_r20s),3))
-print("5-fold mean customRecall@20", round(sum(test_custom_r20s) / len(test_custom_r20s),3))
-print("5-fold mean Recall@50", round(sum(test_r50s) / len(test_r50s),3))
-print("5-fold mean customRecall@50", round(sum(test_custom_r50s) / len(test_custom_r50s),3))
+print("5-fold mean NCDG@100", round(sum(test_n100s) / len(test_n100s),5))
+print("5-fold mean customNCDG@100", round(sum(test_custom_n100s) / len(test_custom_n100s),5))
+print("5-fold mean Recall@20", round(sum(test_r20s) / len(test_r20s),5))
+print("5-fold mean customRecall@20", round(sum(test_custom_r20s) / len(test_custom_r20s),5))
+print("5-fold mean Recall@50", round(sum(test_r50s) / len(test_r50s),5))
+print("5-fold mean customRecall@50", round(sum(test_custom_r50s) / len(test_custom_r50s),5))

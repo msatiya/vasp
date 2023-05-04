@@ -1,7 +1,7 @@
 __pycache__/
 Datasets/
 ml-20m/
-*.json
 *_best_*
 tb_logs/
-*nohup*
+nohup*
+og_vasp_data

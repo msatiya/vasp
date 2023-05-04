@@ -262,8 +262,7 @@ class Split:
     Definition of train/validation/test subsets of the dataset.
     """
 
-    def __init__(self, data, k_test, shuffle=True, index=0, generator=True, batch_size=1024, chunk=1):
-#    def __init__(self, data, k_test, shuffle=True, index=0, generator=True, batch_size=128, chunk=1):
+    def __init__(self, data, k_test, shuffle=True, index=0, generator=True, batch_size=128, chunk=1):
         """
         Create split of k test items
         shuffle = shuffle users on begin
@@ -285,7 +284,7 @@ class Split:
             self.generators(batch_size=batch_size)
 
     def generators(self,
-                   batch_size=1024, #128,
+                   batch_size=128,
                    random_batching=True,
                    prevent_identity=True,
                    full_data=False,
@@ -840,7 +839,7 @@ class MetricsCallback(tf.keras.callbacks.Callback):
         self.epoch = 0
         self.loss_metrics = dict()
         self.eval_metrics = dict()
-        self.evaluate_loss_metrics = ['loss', 'val_loss']
+        self.evaluate_loss_metrics = ['loss']#, 'val_loss']
         self.rsmodel = rsmodel
         self.best_ncdg100 = 0.
         self.best_ncdg100_epoch = 0
