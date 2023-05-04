@@ -1,0 +1,132 @@
+[PhysicalDevice(name='/physical_device:CPU:0', device_type='CPU'), PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]
+Reading users_pu5
+Reading items_pu5
+Reading purchases_txt_pu5
+Reading items_sorted_pu5
+Reading users_sorted_pu5
+Read all in 0.024026155471801758
+Tokenizer trained for 2120 items.
+Creating 1 splits of 10000 samples each.
+Creating split nr. 1
+SplitGenerator init done in 0.016101598739624023 secs.
+SplitGenerator init done in 0.0032052993774414062 secs.
+SplitGenerator init done in 0.003345489501953125 secs.
+Creating evaluator
+Creating test split evaluator with leave_random_20_pct_out method.
+Creating validation split evaluator with leave_random_20_pct_out method.
+Model: "model"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ dense (Dense)               multiple                  2867200   
+                                                                 
+ layer_normalization (LayerN  multiple                 8192      
+ ormalization)                                                   
+                                                                 
+ dense_1 (Dense)             multiple                  16781312  
+                                                                 
+ layer_normalization_1 (Laye  multiple                 8192      
+ rNormalization)                                                 
+                                                                 
+ dense_2 (Dense)             multiple                  16781312  
+                                                                 
+ layer_normalization_2 (Laye  multiple                 8192      
+ rNormalization)                                                 
+                                                                 
+ dense_3 (Dense)             multiple                  16781312  
+                                                                 
+ layer_normalization_3 (Laye  multiple                 8192      
+ rNormalization)                                                 
+                                                                 
+ dense_4 (Dense)             multiple                  16781312  
+                                                                 
+ layer_normalization_4 (Laye  multiple                 8192      
+ rNormalization)                                                 
+                                                                 
+ dense_5 (Dense)             multiple                  16781312  
+                                                                 
+ layer_normalization_5 (Laye  multiple                 8192      
+ rNormalization)                                                 
+                                                                 
+ dense_6 (Dense)             multiple                  16781312  
+                                                                 
+ layer_normalization_6 (Laye  multiple                 8192      
+ rNormalization)                                                 
+                                                                 
+ Mean (Dense)                multiple                  8390656   
+                                                                 
+ log_var (Dense)             multiple                  8390656   
+                                                                 
+ Sampler (Sampling)          multiple                  0         
+                                                                 
+ dense_7 (Dense)             multiple                  8392704   
+                                                                 
+ layer_normalization_7 (Laye  multiple                 8192      
+ rNormalization)                                                 
+                                                                 
+ dense_8 (Dense)             multiple                  16781312  
+                                                                 
+ layer_normalization_8 (Laye  multiple                 8192      
+ rNormalization)                                                 
+                                                                 
+ dense_9 (Dense)             multiple                  16781312  
+                                                                 
+ layer_normalization_9 (Laye  multiple                 8192      
+ rNormalization)                                                 
+                                                                 
+ dense_10 (Dense)            multiple                  16781312  
+                                                                 
+ layer_normalization_10 (Lay  multiple                 8192      
+ erNormalization)                                                
+                                                                 
+ dense_11 (Dense)            multiple                  16781312  
+                                                                 
+ layer_normalization_11 (Lay  multiple                 8192      
+ erNormalization)                                                
+                                                                 
+ DecoderR (Dense)            multiple                  2863803   
+                                                                 
+ DecoderL (Dense)            multiple                  1432251   
+                                                                 
+ dense_12 (Dense)            multiple                  488601    
+                                                                 
+=================================================================
+Total params: 200,737,295
+Trainable params: 200,737,295
+Non-trainable params: 0
+_________________________________________________________________
+================================================================================
+Train for 50 epochs with lr 0.00005
+1/9 [==>...........................] - ETA: 1:49 - loss: 14.7504 - mse: 0.0128 - cosine_loss: 0.9266 - kl_div: 1.13983/9 [=========>....................] - ETA: 0s - loss: 14.2802 - mse: 0.0124 - cosine_loss: 0.9278 - kl_div: 1.1339  5/9 [===============>..............] - ETA: 0s - loss: 14.2609 - mse: 0.0122 - cosine_loss: 0.9273 - kl_div: 1.13047/9 [======================>.......] - ETA: 0s - loss: 14.0984 - mse: 0.0120 - cosine_loss: 0.9252 - kl_div: 1.12709/9 [==============================] - ETA: 0s - loss: 13.9166 - mse: 0.0119 - cosine_loss: 0.9230 - kl_div: 1.12341/6 [====>.........................] - ETA: 3s6/6 [==============================] - 1s 3ms/step
+Model metrics:Recall@5=0.0293 Recall@20=0.1146 custom_Recall@20=0.1145 Recall@50=0.2182 custom_Recall@50=0.2182 NCDG@100=0.0984 custom_NCDG@100=0.0984 Coverage@5=0.1855 Coverage@20=0.3157 Coverage@50=0.3294 Coverage@100=0.3294 
+New best for NCDG@100
+New best for Recall@20
+New best for Recall@50
+9/9 [==============================] - 53s 5s/step - loss: 13.9166 - mse: 0.0119 - cosine_loss: 0.9230 - kl_div: 1.1234
+   epochs  Recall@5  Recall@20  ...  Coverage@20  Coverage@50  Coverage@100
+0       1  0.029293   0.114613  ...     0.315715     0.329401      0.329401
+
+[1 rows x 12 columns]
+Creating test split evaluator with 1_20 method.
+1/6 [====>.........................] - ETA: 0s6/6 [==============================] - 0s 3ms/step
+Creating test split evaluator with 2_20 method.
+1/6 [====>.........................] - ETA: 0s6/6 [==============================] - 0s 3ms/step
+Creating test split evaluator with 3_20 method.
+1/6 [====>.........................] - ETA: 0s6/6 [==============================] - 0s 3ms/step
+Creating test split evaluator with 4_20 method.
+1/6 [====>.........................] - ETA: 0s6/6 [==============================] - 0s 3ms/step
+Creating test split evaluator with 5_20 method.
+1/6 [====>.........................] - ETA: 0s6/6 [==============================] - 0s 3ms/step
+TEST SET (MEAN)
+5-fold mean NCDG@100 0.12234
+5
+5-fold mean customNCDG@100 0.12234
+5
+5-fold mean Recall@20 0.14258
+5
+5-fold mean customRecall@20 0.14255
+5
+5-fold mean Recall@50 0.23651
+5
+5-fold mean customRecall@50 0.23651
+5

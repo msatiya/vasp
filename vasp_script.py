@@ -222,7 +222,8 @@ class VASP(Model):
             self.split.train_gen,
             validation_data=self.split.validation_gen,
             epochs=epochs,
-            callbacks=[self.mc, tensorboard_callback]
+            callbacks=[self.mc, tensorboard_callback],
+            use_multiprocessing = True
         )
 
 dataset = Data(d=data_path, pruning='u5')
@@ -241,15 +242,15 @@ m.model.summary()
 print("=" * 80)
 print("Train for 50 epochs with lr 0.00005")
 m.compile_model(lr=0.00005, fl_alpha=0.25, fl_gamma=2.0)
-m.train_model(1)
-# print("=" * 80)
-# print("Than train for 20 epochs with lr 0.00001")
-# m.compile_model(lr=0.00001, fl_alpha=0.25, fl_gamma=2.0)
-# m.train_model(20)
-# print("=" * 80)
-# print("Than train for 20 epochs with lr 0.000001")
-# m.compile_model(lr=0.00001, fl_alpha=0.25, fl_gamma=2.0)
-# m.train_model(20)
+m.train_model(50)
+print("=" * 80)
+print("Than train for 20 epochs with lr 0.00001")
+m.compile_model(lr=0.00001, fl_alpha=0.25, fl_gamma=2.0)
+m.train_model(20)
+print("=" * 80)
+print("Than train for 20 epochs with lr 0.000001")
+m.compile_model(lr=0.00001, fl_alpha=0.25, fl_gamma=2.0)
+m.train_model(20)
 
 print(m.mc.get_history_df())
 
@@ -273,9 +274,9 @@ for fold in range(1,6):
     test_custom_r50s.append(ev.custom_recall_at_rank_k(50))
 
 print("TEST SET (MEAN)")
-print("5-fold mean NCDG@100", round(sum(test_n100s) / len(test_n100s),3))
-print("5-fold mean customNCDG@100", round(sum(test_custom_n100s) / len(test_custom_n100s),3))
-print("5-fold mean Recall@20", round(sum(test_r20s) / len(test_r20s),3))
-print("5-fold mean customRecall@20", round(sum(test_custom_r20s) / len(test_custom_r20s),3))
-print("5-fold mean Recall@50", round(sum(test_r50s) / len(test_r50s),3))
-print("5-fold mean customRecall@50", round(sum(test_custom_r50s) / len(test_custom_r50s),3))
+print("5-fold mean NCDG@100", round(sum(test_n100s) / len(test_n100s),5))
+print("5-fold mean customNCDG@100", round(sum(test_custom_n100s) / len(test_custom_n100s),5))
+print("5-fold mean Recall@20", round(sum(test_r20s) / len(test_r20s),5))
+print("5-fold mean customRecall@20", round(sum(test_custom_r20s) / len(test_custom_r20s),5))
+print("5-fold mean Recall@50", round(sum(test_r50s) / len(test_r50s),5))
+print("5-fold mean customRecall@50", round(sum(test_custom_r50s) / len(test_custom_r50s),5))

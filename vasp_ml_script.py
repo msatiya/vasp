@@ -222,7 +222,8 @@ class VASP(Model):
             self.split.train_gen,
             validation_data=self.split.validation_gen,
             epochs=epochs,
-            callbacks=[self.mc, tensorboard_callback]
+            callbacks=[self.mc, tensorboard_callback],
+            use_multiprocessing = True
         )
 
 dataset = Data(d=data_path, pruning='u5')

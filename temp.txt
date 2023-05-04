@@ -93,3 +93,21 @@ custom_adjusted_recall_at_rank_k
 custom_precision_at_rank_k
 
 [['45', '560', '757', '3', '16', '11', '360', '498', '504', '1030', '317', '133', '315', '762', '364', '153', '566', '56', '616', '65', '880', '8', '292', '690', '1029', '571', '658', '904', '1767', '176', '621', '365', '889', '336', '906', '1513', '78', '1314', '562', '480', '599', '320', '484', '205', '223', '374', '83', '663', '21', '82', '659', '426', '214', '1482', '610', '588', '592', '572', '47', '1431', '208', '890', '388', '195', '515', '770', '543', '594', '1250', '491', '1819', '747', '67', '1382', '902', '1396', '479', '565', '2120', '785', '106', '635', '1017', '15', '597', '230', '779', '258', '2719', '81', '876', '384', '1407', '755', '1573', '1232', '605', '495', '1486', '422']]
+
+end = int('5_20'[0])
+start = end - 1
+random.seed(get_seed())
+for e in range(len(self.ivx)):
+    tech20 = []
+    interactions_len = len(self.ivx[e])
+    num_to_add = int(interactions_len * 0.2)
+    if num_to_add < 1:
+        num_to_add = 1
+    shuffle(self.ivx[e])
+    for x in range(start * num_to_add, end * num_to_add):
+        random_pick_index = x
+        if random_pick_index >= len(self.ivx[e]):
+            random_pick_index = len(self.ivx[e]) - 1
+        tech20.append(self.ivx[e].pop(random_pick_index))
+    self.tpx.append(tech20)
+
