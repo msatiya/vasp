@@ -636,7 +636,7 @@ class Evaluator:
             pred_items = prediction_ids[uid]
 
             hits = aux_custom_hits_at_rank_k(pred_items, true_items, k)
-            recall = hits / len(true_items[:k]) if len(true_items[:k]) > 0 else 0
+            recall = list(hits) / len(true_items[:k]) if len(true_items[:k]) > 0 else 0
             metrics_array.append(recall)
 
         return np.mean(metrics_array)
